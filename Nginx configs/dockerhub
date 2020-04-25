@@ -1,0 +1,39 @@
+server {
+       listen 80 ;
+       server_name dockerhub.thalamus.am;
+       return 301 https://dockerhub.thalamus.am$request_uri;
+}
+ 
+server {
+    listen          443 ssl ;
+    server_name     dockerhub.thalamus.am;
+ 
+    proxy_send_timeout 120;
+    proxy_read_timeout 300;
+    proxy_buffering    off;
+    tcp_nodelay        on;
+ 
+    server_tokens off;
+    client_max_body_size 1G;
+ 
+    ssl on;
+    ssl_certificate /etc/ssl/certs/thalamus.crt;
+    ssl_certificate_key /etc/ssl/private/thalamus.key;
+    keepalive_timeout 60;
+    ssl_ciphers HIGH:!kEDH:!ADH:!MD5:@STRENGTH;
+    ssl_session_cache shared:TLSSSL:16m;
+    ssl_session_timeout 10m;
+    ssl_prefer_server_ciphers on;
+ 
+    access_log /var/log/nginx/dockerhub.access.log;
+    error_log /var/log/nginx/dockerhub.error.log;
+ 
+    location / {
+        proxy_pass http://127.0.0.1:8123;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout      90;
+    }
+}
